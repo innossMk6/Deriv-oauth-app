@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Ndebe Trade Pro</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body{font-family:Arial,sans-serif;display:flex;justify-content:center;align-items:center;min-height:100vh;margin:0;background:#1a1a2e;padding:20px}
+        .container{text-align:center;padding:40px;background:#fff;border-radius:10px;box-shadow:0 4px 20px rgba(0,0,0,0.3);max-width:500px;width:100%}
+        h1{color:#1a1a2e;margin-bottom:10px}
+        p{color:#666;margin-bottom:20px}
+        .login-btn{background:#ff4444;color:#fff;border:none;padding:15px 40px;font-size:18px;border-radius:5px;cursor:pointer;width:100%;font-weight:bold}
+        .login-btn:hover{background:#cc0000}
+        .info-box{margin-top:20px;padding:15px;background:#f5f5f5;border-radius:5px;font-size:12px;color:#666;word-break:break-all}
+        #status{margin-top:15px;padding:15px;border-radius:5px;display:none;font-size:14px}
+        .error{background:#ffcdd2;color:#c62828}
+        .success{background:#c8e6c9;color:#2e7d32}
+        .code-display{background:#1a1a2e;color:#4fc3f7;padding:10px;border-radius:5px;font-family:monospace;font-size:11px;word-break:break-all;margin:10px 0;text-align:left}
+        .btn-group{display:flex;gap:10px;margin-top:10px}
+        .btn-group button{flex:1;padding:8px;border:none;border-radius:3px;cursor:pointer;font-size:12px}
+        .btn-copy{background:#1a1a2e;color:#fff}
+        .btn-clear{background:#ff4444;color:#fff}
+        .loading{display:none;margin-top:10px;color:#666}
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚀 Ndebe Trade Pro</h1>
+        <p>Connect your Deriv account to start trading</p>
+        <button class="login-btn" onclick="loginWithDeriv()" id="loginBtn">Login with Deriv</button>
+        <div class="loading" id="loading">Redirecting to Deriv...</div>
+        <div id="status"></div>
+        <div class="info-box">
+            <strong>App ID:</strong> 33B44tAtovshldelmNunD<br>
+            <strong>Redirect:</strong> https://deriv-oauth-app.vercel.app/callback
+        </div>
+    </div>
+    <script>
+        const CLIENT_ID="33B44tAtovshldelmNunD";
+        const REDIRECT_URI="https://deriv-oauth-app.vercel.app/callback";
+
+        function handleCallback(){
+            const urlParams=new URLSearchParams(window.location.search);
+            const code=urlParams.get('code');
+            const error=urlParams.get('error');
+            const errorDescription=urlParams.get('error_description');
+            if(error){
+                const statusDiv=document.getElementById('status');
+                statusDiv.textContent='❌ Error: '+error+(errorDescription?' - '+errorDescription:'');
+                statusDiv.className='error';
+                statusDiv.style.display='block';
+                document.getElementById('loginBtn').style.display='block';
+                return;
+            }
+            if(code){
+                const statusDiv=document.getElementById('status');
+                statusDiv.innerHTML='<strong>✅ Authorization Code Received!</strong><div class="code-display">'+code+'</div><small>This code will be exchanged for an access token on your backend.</small><div class="btn-group"><button class="btn-copy" onclick="copyCode()">📋 Copy Code</button><button class="btn-clear" onclick="clearStoredCode()">🗑️ Clear Code</button></div>';
+                statusDiv.className='success';
+                statusDiv.style.display='block';
+                document.getElementById('loginBtn').style.display='block';
+                localStorage.setItem('deriv_auth_code',code);
+                console.log('Authorization Code:',code);
+            }
+        }
+
+        function copyCode(){
+            const code=localStorage.getItem('deriv_auth_code');
+            if(code){
+                navigator.clipboard.writeText(code).then(()=>alert('✅ Code copied!')).catch(()=>{
+                    const textarea=document.createElement('textarea');
+                    textarea.value=code;
+                    document.body.appendChild(textarea);
+                    textarea.select();
+                    document.execCommand('copy');
+                    document.body.removeChild(textarea);
+                    alert('✅ Code copied!');
+                });
+            }
+        }
+
+        function loginWithDeriv(){
+            const state=Math.random().toString(36).substring(7);
+            localStorage.setItem('oauth_state',state);
+            document.getElementById('loading').style.display='block';
+            document.getElementById('loginBtn').style.display='none';
+            const authUrl='https://auth.deriv.com/oauth2/auth?response_type=code&client_id='+CLIENT_ID+'&redirect_uri='+encodeURIComponent(REDIRECT_URI)+'&scope=trade&state='+state;
+            window.location.href=authUrl;
+        }
+
+        window.onload=function(){
+            handleCallback();
+            const storedCode=localStorage.getItem('deriv_auth_code');
+            if(storedCode&&!window.location.search.includes('code=')){
+                const statusDiv=document.getElementById('status');
+                statusDiv.innerHTML='<strong>📝 Stored Authorization Code Found</strong><div class="code-display">'+storedCode+'</div><div class="btn-group"><button class="btn-copy" onclick="copyCode()">📋 Copy Code</button><button class="btn-clear" onclick="clearStoredCode()">🗑️ Clear Code</button></div>';
+                statusDiv.className='success';
+                statusDiv.style.display='block';
+            }
+        };
+
+        function clearStoredCode(){
+            localStorage.removeItem('deriv_auth_code');
+            document.getElementById('status').style.display='none';
+        }
+    </script>
+</body>
+</html>
