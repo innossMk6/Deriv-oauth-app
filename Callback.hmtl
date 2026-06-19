@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Callback - Ndebe Trade Pro</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body{font-family:Arial,sans-serif;display:flex;justify-content:center;align-items:center;min-height:100vh;margin:0;background:#1a1a2e;padding:20px}
+        .container{text-align:center;padding:40px;background:#fff;border-radius:10px;box-shadow:0 4px 20px rgba(0,0,0,0.3);max-width:500px;width:100%}
+        h1{color:#1a1a2e;margin-bottom:10px}
+        p{color:#666;margin-bottom:20px}
+        .code-display{background:#1a1a2e;color:#4fc3f7;padding:10px;border-radius:5px;font-family:monospace;font-size:11px;word-break:break-all;margin:10px 0;text-align:left}
+        .success{background:#c8e6c9;color:#2e7d32;padding:15px;border-radius:5px}
+        .error{background:#ffcdd2;color:#c62828;padding:15px;border-radius:5px}
+        .btn-group{display:flex;gap:10px;margin-top:10px}
+        .btn-group button{flex:1;padding:8px;border:none;border-radius:3px;cursor:pointer;font-size:12px}
+        .btn-copy{background:#1a1a2e;color:#fff}
+        .btn-clear{background:#ff4444;color:#fff}
+        .home-link{display:inline-block;margin-top:20px;color:#ff4444;text-decoration:none}
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚀 Ndebe Trade Pro</h1>
+        <div id="status">Loading...</div>
+        <a href="https://deriv-oauth-app.vercel.app" class="home-link">← Back to Home</a>
+    </div>
+    <script>
+        // YOUR CLIENT ID
+        const CLIENT_ID = "33B44tAtovshldelmNunD";
+
+        function handleCallback() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const code = urlParams.get('code');
+            const state = urlParams.get('state');
+            const error = urlParams.get('error');
+            const errorDescription = urlParams.get('error_description');
+            
+            const statusDiv = document.getElementById('status');
+
+            if (error) {
+                statusDiv.className = 'error';
+                statusDiv.innerHTML = '❌ Error: ' + error + (errorDescription ? ' - ' + errorDescription : '');
+                return;
+            }
+
+            if (code) {
+                statusDiv.className = 'success';
+                statusDiv.innerHTML = `
+                    <strong>✅ Authorization Code Received!</strong>
+                    <div class="code-display">${code}</div>
+                    <small>This code will be exchanged for an access token on your backend.</small>
+                    <div class="btn-group">
+                        <button class="btn-copy" onclick="copyCode('${code}')">📋 Copy Code</button>
+                        <button class="btn-clear" onclick="clearCode()">🗑️ Clear Code</button>
+                    </div>
+                `;
+                localStorage.setItem('deriv_auth_code', code);
+                console.log('Authorization Code:', code);
+            } else {
+                statusDiv.className = 'error';
+                statusDiv.innerHTML = '❌ No authorization code found in the URL.';
+            }
+        }
+
+        function copyCode(code) {
+            navigator.clipboard.writeText(code).then(() => {
+                alert('✅ Code copied to clipboard!');
+            }).catch(() => {
+                const textarea = document.createElement('textarea');
+                textarea.value = code;
+                document.body.appendChild(textarea);
+                textarea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textarea);
+                alert('✅ Code copied to clipboard!');
+            });
+        }
+
+        function clearCode() {
+            localStorage.removeItem('deriv_auth_code');
+            document.getElementById('status').innerHTML = '🗑️ Code cleared from storage.';
+        }
+
+        // Run when page loads
+        window.onload = handleCallback;
+    </script>
+</body>
+</html>
